@@ -39,7 +39,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         public void run() {
             MainFragment fragment = sCurrentFragment.get();
             if(fragment != null && fragment.mTimerView != null) {
-                if(sTime > 0) {
+                if(sTime > 1) {
+                    sTime--;
+                    fragment.mTimerView.updateValue(sTime);
                     if(sTime == 10){
                         MediaPlayer player = MediaPlayer.create(fragment.getActivity(),
                                 Settings.System.DEFAULT_NOTIFICATION_URI);
@@ -51,10 +53,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                         });
                         player.start();
                     }
-                    sTime--;
-                    fragment.mTimerView.updateValue(sTime);
                     sHandler.postDelayed(sRunnable, 1000);
-                } else if(sTime == 0) {
+                } else if(sTime == 1) {
                     sTime = -1;
                     fragment.mTimerView.updateValue(0);
                     fragment.mStartButton.setText(R.string.stop);
