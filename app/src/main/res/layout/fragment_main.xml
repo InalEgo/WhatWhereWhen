@@ -73,16 +73,31 @@
             android:layout_gravity="center"/>
     </LinearLayout>
 
-    <com.android.inalego.whatwherewhen.TimerView
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/zero_zero_zero"
-        android:id="@+id/timer"
-        android:layout_weight="3"
-        android:layout_gravity="center_horizontal"
-        android:gravity="center"
-        android:textSize="50sp"/>
+        android:layout_weight="1">
+
+        <com.android.inalego.whatwherewhen.TimerView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/zero_zero_zero"
+            android:id="@+id/timer"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:textSize="50sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="0'"
+            android:id="@+id/additional_minutes"
+            android:layout_gravity="end"
+            android:textSize="50sp" />
+
+    </FrameLayout>
 
     <Button
         android:layout_width="wrap_content"
@@ -90,5 +105,6 @@
         android:text="@string/start"
         android:id="@+id/start_button"
         android:layout_weight="1"
-        android:layout_gravity="center_horizontal"/>
+        android:layout_gravity="center_horizontal"
+        android:background="#ff00ff00" />
 </LinearLayout>
