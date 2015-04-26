@@ -29,6 +29,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     private final static String VIEWERS_SCORE_KEY = "viewers_score_key";
     private final static String INIT_TIME_KEY = "init_time_key";
     private final static String ADD_MINUTES_KEY = "add_minutes_key";
+    private final static String START_BUTTON_COLOR_KEY = "start_button_color_key";
+
 
     private static int STANDARD_TIME = 60;
     private static int BLITZ_TIME = 20;
@@ -60,7 +62,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 if(sTime > 1) {
                     sTime--;
                     fragment.mTimerView.updateValue(sTime);
-                    if(sTime == 10){
+                    if (sTime == 10 && fragment.mInitTime == STANDARD_TIME) {
                         MediaPlayer player = MediaPlayer.create(fragment.getActivity(),
                                 Settings.System.DEFAULT_NOTIFICATION_URI);
                         player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -171,6 +173,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             mViewersScoreView.setText(String.valueOf(mViewersScore));
             mInitTime = savedInstanceState.getInt(INIT_TIME_KEY);
             mAdditionalMinutes = savedInstanceState.getInt(ADD_MINUTES_KEY);
+            mStartButton.setBackgroundColor(savedInstanceState.getInt(START_BUTTON_COLOR_KEY));
         } else {
             mInitTime = STANDARD_TIME;
             mAdditionalMinutes = 0;
@@ -199,6 +202,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         outState.putInt(VIEWERS_SCORE_KEY, mViewersScore);
         outState.putInt(INIT_TIME_KEY, mInitTime);
         outState.putInt(ADD_MINUTES_KEY, mAdditionalMinutes);
+        outState.putInt(START_BUTTON_COLOR_KEY,
+                ((ColorDrawable) mStartButton.getBackground()).getColor());
     }
 
     @Override
