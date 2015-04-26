@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -229,6 +230,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     sColorHandler.removeCallbacksAndMessages(null);
                     sTime = mInitTime;
                     mStartButton.setText(R.string.reset);
+                    ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                    tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
                     sHandler.postDelayed(sRunnable, 1000);
                     sColorHandler.postDelayed(sColorRunnable,
                             mInitTime == STANDARD_TIME ? 3000 / 13 : 1000 / 13);
