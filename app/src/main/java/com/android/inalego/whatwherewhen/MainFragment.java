@@ -32,7 +32,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     private final static String ADD_MINUTES_KEY = "add_minutes_key";
     private final static String START_BUTTON_COLOR_KEY = "start_button_color_key";
 
-
     private static int STANDARD_TIME = 60;
     private static int BLITZ_TIME = 20;
 
@@ -123,9 +122,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public MainFragment() {
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -160,12 +156,71 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         mStartButton = (Button) rootView.findViewById(R.id.start_button);
         mAdditionalMinutesView = (TextView) rootView.findViewById(R.id.additional_minutes);
 
-        (rootView.findViewById(R.id.incExpertsScore)).setOnClickListener(this);
-        (rootView.findViewById(R.id.incViewersScore)).setOnClickListener(this);
         (rootView.findViewById(R.id.start_button)).setOnClickListener(this);
 
-        mTimerView.setOnTouchListener(new OnLRSwipeTouchListener(getActivity()));
-        mAdditionalMinutesView.setOnTouchListener(new OnTBSwipeTouchListener(getActivity()));
+        mExpertsScoreView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
+            public void onSwipeTop() {
+                if (mExpertsScore + mViewersScore < 11) {
+                    ++mExpertsScore;
+                }
+                mExpertsScoreView.setText(String.valueOf(mExpertsScore));
+            }
+
+            public void onSwipeBottom() {
+                mExpertsScore = mExpertsScore > 0 ? mExpertsScore - 1 : 0;
+                mExpertsScoreView.setText(String.valueOf(mExpertsScore));
+            }
+        });
+
+        mViewersScoreView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
+            public void onSwipeTop() {
+                if (mExpertsScore + mViewersScore < 11) {
+                    ++mViewersScore;
+                }
+                mViewersScoreView.setText(String.valueOf(mViewersScore));
+            }
+
+            public void onSwipeBottom() {
+                mViewersScore = mViewersScore > 0 ? mViewersScore - 1 : 0;
+                mViewersScoreView.setText(String.valueOf(mViewersScore));
+            }
+        });
+
+        mTimerView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
+            public void onSwipeLeft() {
+                if (sPlayer == null && sTime == -1) {
+                    if (mInitTime == STANDARD_TIME) {
+                        mInitTime = BLITZ_TIME;
+                    } else {
+                        mInitTime = STANDARD_TIME;
+                    }
+                    mTimerView.updateValue(mInitTime);
+                }
+            }
+
+            public void onSwipeRight() {
+                if (sPlayer == null && sTime == -1) {
+                    if (mInitTime == STANDARD_TIME) {
+                        mInitTime = BLITZ_TIME;
+                    } else {
+                        mInitTime = STANDARD_TIME;
+                    }
+                    mTimerView.updateValue(mInitTime);
+                }
+            }
+        });
+
+        mAdditionalMinutesView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
+            public void onSwipeTop() {
+                mAdditionalMinutes = mAdditionalMinutes < 5 ? mAdditionalMinutes + 1 : 5;
+                mAdditionalMinutesView.setText(mAdditionalMinutes + "'");
+            }
+
+            public void onSwipeBottom() {
+                mAdditionalMinutes = mAdditionalMinutes > 0 ? mAdditionalMinutes - 1 : 0;
+                mAdditionalMinutesView.setText(mAdditionalMinutes + "'");
+            }
+        });
 
         if (savedInstanceState != null) {
             mExpertsScore = savedInstanceState.getInt(EXPERTS_SCORE_KEY);
@@ -210,14 +265,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()){
-            case R.id.incExpertsScore:
-                ++mExpertsScore;
-                mExpertsScoreView.setText(String.valueOf(mExpertsScore));
-                break;
-            case R.id.incViewersScore:
-                ++mViewersScore;
-                mViewersScoreView.setText(String.valueOf(mViewersScore));
-                break;
             case R.id.start_button:
                 if (sPlayer != null) {
                     sPlayer.release();
@@ -245,81 +292,23 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public class OnLRSwipeTouchListener implements OnTouchListener {
+    public class OnSwipeTouchListener implements OnTouchListener {
         private final GestureDetector gestureDetector;
 
-        public OnLRSwipeTouchListener(Context context) {
+        public OnSwipeTouchListener(Context context) {
             gestureDetector = new GestureDetector(context, new GestureListener());
         }
 
         public void onSwipeLeft() {
-            if (sPlayer == null && sTime == -1) {
-                if (mInitTime == STANDARD_TIME) {
-                    mInitTime = BLITZ_TIME;
-                } else {
-                    mInitTime = STANDARD_TIME;
-                }
-                mTimerView.updateValue(mInitTime);
-            }
         }
 
         public void onSwipeRight() {
-            if (sPlayer == null && sTime == -1) {
-                if (mInitTime == STANDARD_TIME) {
-                    mInitTime = BLITZ_TIME;
-                } else {
-                    mInitTime = STANDARD_TIME;
-                }
-                mTimerView.updateValue(mInitTime);
-            }
-        }
-
-        public boolean onTouch(View v, MotionEvent event) {
-            return gestureDetector.onTouchEvent(event);
-        }
-
-        private final class GestureListener extends SimpleOnGestureListener {
-            private static final int SWIPE_DISTANCE_THRESHOLD = 100;
-            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true;
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                float distanceX = e2.getX() - e1.getX();
-                float distanceY = e2.getY() - e1.getY();
-                if (Math.abs(distanceX) > Math.abs(distanceY)
-                        && Math.abs(distanceX) > SWIPE_DISTANCE_THRESHOLD
-                        && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                    if (distanceX > 0)
-                        onSwipeRight();
-                    else
-                        onSwipeLeft();
-                    return true;
-                }
-                return false;
-            }
-        }
-    }
-
-    public class OnTBSwipeTouchListener implements OnTouchListener {
-        private final GestureDetector gestureDetector;
-
-        public OnTBSwipeTouchListener(Context context) {
-            gestureDetector = new GestureDetector(context, new GestureListener());
         }
 
         public void onSwipeTop() {
-            mAdditionalMinutes = mAdditionalMinutes < 5 ? mAdditionalMinutes + 1 : 5;
-            mAdditionalMinutesView.setText(mAdditionalMinutes + "'");
         }
 
         public void onSwipeBottom() {
-            mAdditionalMinutes = mAdditionalMinutes > 0 ? mAdditionalMinutes - 1 : 0;
-            mAdditionalMinutesView.setText(mAdditionalMinutes + "'");
         }
 
         public boolean onTouch(View v, MotionEvent event) {
@@ -339,15 +328,25 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 float distanceX = e2.getX() - e1.getX();
                 float distanceY = e2.getY() - e1.getY();
-                if (Math.abs(distanceX) < Math.abs(distanceY)
-                        && Math.abs(distanceY) > SWIPE_DISTANCE_THRESHOLD
-                        && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                    if (distanceY > 0) {
-                        onSwipeBottom();
-                    } else {
-                        onSwipeTop();
+                if (Math.abs(distanceX) < Math.abs(distanceY)) {
+                    if (Math.abs(distanceY) > SWIPE_DISTANCE_THRESHOLD
+                            && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (distanceY > 0) {
+                            onSwipeBottom();
+                        } else {
+                            onSwipeTop();
+                        }
+                        return true;
                     }
-                    return true;
+                } else {
+                    if (Math.abs(distanceX) > SWIPE_DISTANCE_THRESHOLD
+                            && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (distanceX > 0)
+                            onSwipeRight();
+                        else
+                            onSwipeLeft();
+                        return true;
+                    }
                 }
                 return false;
             }
