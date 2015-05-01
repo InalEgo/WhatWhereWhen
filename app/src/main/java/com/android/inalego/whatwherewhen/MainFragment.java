@@ -25,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 public class MainFragment extends Fragment implements OnClickListener {
@@ -34,48 +33,21 @@ public class MainFragment extends Fragment implements OnClickListener {
     private static final String START_BUTTON_COLOR_KEY = "start_button_color_key";
     private static final int STANDARD_TIME = 60;
     private static final int BLITZ_TIME = 20;
-    private static final Handler sHandler = new Handler();
+    private static final Handler sTimerHandler = new Handler();
     private static final Handler sColorHandler = new Handler();
     private static MediaPlayer sPlayer;
     private static WeakReference<MainFragment> sCurrentFragment;
-    private static int sTime = -1;
+    private static int sTime;
     private TextView mExpertsScoreView;
     private TextView mViewersScoreView;
     private GameState mGameState;
     private TextView mAdditionalMinutesView;
     private TimerView mTimerView;
     private Button mStartButton;
-    private static final Runnable sRunnable = new Runnable() {
+    private static final Runnable sTimerRunnable = new Runnable() {
         @Override
         public void run() {
-            MainFragment fragment = sCurrentFragment.get();
-            if (fragment != null && fragment.mTimerView != null) {
-                if (sTime > 1) {
-                    sTime--;
-                    if (fragment.isVisible()) {
-                        fragment.mTimerView.updateValue(sTime);
-                    }
-                    if (sTime == 10 && !fragment.mGameState.mIsBlitz) {
-                        MediaPlayer player = MediaPlayer.create(fragment.getActivity(),
-                                Settings.System.DEFAULT_NOTIFICATION_URI);
-                        player.setOnCompletionListener(new OnCompletionListener() {
-                            @Override
-                            public void onCompletion(MediaPlayer mp) {
-                                mp.release();
-                            }
-                        });
-                        player.start();
-                    }
-                    sHandler.postDelayed(sRunnable, 1000);
-                } else if (sTime == 1) {
-                    sTime = -1;
-                    if (fragment.isVisible()) {
-                        fragment.mTimerView.updateValue(0);
-                    }
-                    fragment.mStartButton.setText(R.string.stop);
-                    fragment.setPlayer();
-                }
-            }
+            sCurrentFragment.get().handleTimer();
         }
     };
     private int mInitTime;
@@ -83,35 +55,56 @@ public class MainFragment extends Fragment implements OnClickListener {
     private static final Runnable sColorRunnable = new Runnable() {
         @Override
         public void run() {
-            MainFragment fragment = sCurrentFragment.get();
-            if (fragment != null && sTime != -1) {
-                int red = (fragment.mStartButtonColor & 0x00ff0000) >> 0x10;
-                int green = (fragment.mStartButtonColor & 0x0000ff00) >> 8;
-                red = red < 0xff ? red + 1 : 0xff;
-                green = green > 0 ? green - 1 : 0;
-                fragment.mStartButtonColor = 0xff000000 + (red << 0x10) + (green << 8);
-                fragment.mStartButton.setBackgroundColor(fragment.mStartButtonColor);
-                sColorHandler.postDelayed(sColorRunnable,
-                        fragment.mInitTime == STANDARD_TIME ? 3000 / 13 : 1000 / 13);
-            }
+            sCurrentFragment.get().handleColor();
         }
     };
 
+    private void handleTimer() {
+        if (sTime > 0) {
+            sTime--;
+            if (sTime == 10 && !mGameState.mIsBlitz) {
+                sPlayer = MediaPlayer.create(getActivity(),
+                        Settings.System.DEFAULT_NOTIFICATION_URI);
+                sPlayer.setOnCompletionListener(new OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        sPlayer.release();
+                        sPlayer = null;
+                    }
+                });
+                sPlayer.start();
+            }
+            sTimerHandler.postDelayed(sTimerRunnable, 1000);
+        } else {
+            mStartButton.setText(R.string.stop);
+            setPlayer();
+        }
+        if (isVisible()) {
+            mTimerView.updateValue(sTime);
+        }
+    }
+
     private void setPlayer() {
-        sPlayer = new MediaPlayer();
-        try {
-            sPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
-            sPlayer.setDataSource(getActivity(), Settings.System.DEFAULT_NOTIFICATION_URI);
-            sPlayer.prepare();
-            sPlayer.setOnCompletionListener(new OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    mp.start();
-                }
-            });
-            sPlayer.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+        sPlayer = MediaPlayer.create(getActivity(),
+                Settings.System.DEFAULT_NOTIFICATION_URI);
+        sPlayer.setOnCompletionListener(new OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mp.start();
+            }
+        });
+        sPlayer.start();
+    }
+
+    private void handleColor() {
+        if (sTime != 0) {
+            int red = (mStartButtonColor & 0x00ff0000) >> 0x10;
+            int green = (mStartButtonColor & 0x0000ff00) >> 8;
+            red = red < 0xff ? red + 1 : 0xff;
+            green = green > 0 ? green - 1 : 0;
+            mStartButtonColor = 0xff000000 + (red << 0x10) + (green << 8);
+            mStartButton.setBackgroundColor(mStartButtonColor);
+            sColorHandler.postDelayed(sColorRunnable, mGameState.mIsBlitz ? 1000 / 13 : 3000 / 13);
         }
     }
 
@@ -130,13 +123,17 @@ public class MainFragment extends Fragment implements OnClickListener {
             mViewersScoreView.setText(String.valueOf(mGameState.mViewersScore));
             mGameState.mAdditionalMinutes = 0;
             mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
-            sHandler.removeCallbacksAndMessages(null);
+            sTimerHandler.removeCallbacksAndMessages(null);
             sColorHandler.removeCallbacksAndMessages(null);
-            sTime = -1;
+            sTime = 0;
             mTimerView.updateValue(mInitTime);
             mStartButtonColor = INITIAL_START_BUTTON_COLOR;
             mStartButton.setBackgroundColor(mStartButtonColor);
             mStartButton.setText(R.string.start);
+            if (sPlayer != null) {
+                sPlayer.release();
+                sPlayer = null;
+            }
             return true;
         }
 
@@ -202,7 +199,7 @@ public class MainFragment extends Fragment implements OnClickListener {
 
         mTimerView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
             public void onSwipeLeft() {
-                if (sPlayer == null && sTime == -1) {
+                if (sPlayer == null && sTime == 0) {
                     mGameState.mIsBlitz = !mGameState.mIsBlitz;
                     mInitTime = mGameState.mIsBlitz ? BLITZ_TIME : STANDARD_TIME;
                     mTimerView.updateValue(mInitTime);
@@ -210,7 +207,7 @@ public class MainFragment extends Fragment implements OnClickListener {
             }
 
             public void onSwipeRight() {
-                if (sPlayer == null && sTime == -1) {
+                if (sPlayer == null && sTime == 0) {
                     mGameState.mIsBlitz = !mGameState.mIsBlitz;
                     mInitTime = mGameState.mIsBlitz ? BLITZ_TIME : STANDARD_TIME;
                     mTimerView.updateValue(mInitTime);
@@ -254,7 +251,7 @@ public class MainFragment extends Fragment implements OnClickListener {
         if (sPlayer != null) {
             mStartButton.setText(R.string.stop);
             mTimerView.updateValue(0);
-        } else if (sTime == -1) {
+        } else if (sTime == 0) {
             mTimerView.updateValue(mInitTime);
             mStartButton.setText(R.string.start);
         } else {
@@ -268,29 +265,26 @@ public class MainFragment extends Fragment implements OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.start_button:
-                sHandler.removeCallbacksAndMessages(null);
+                sTimerHandler.removeCallbacksAndMessages(null);
                 sColorHandler.removeCallbacksAndMessages(null);
-                if (sPlayer != null) {
-                    sPlayer.release();
-                    sPlayer = null;
-                    mTimerView.updateValue(mInitTime);
-                    mStartButtonColor = INITIAL_START_BUTTON_COLOR;
-                    mStartButton.setBackgroundColor(mStartButtonColor);
-                    mStartButton.setText(R.string.start);
-                } else if (sTime == -1) {
+                if (sPlayer == null && sTime == 0) {
                     sTime = mInitTime;
                     mStartButton.setText(R.string.reset);
                     ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
                     tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-                    sHandler.postDelayed(sRunnable, 1000);
+                    sTimerHandler.postDelayed(sTimerRunnable, 1000);
                     sColorHandler.postDelayed(sColorRunnable,
                             mGameState.mIsBlitz ? 1000 / 13 : 3000 / 13);
                 } else {
-                    sTime = -1;
+                    sTime = 0;
                     mTimerView.updateValue(mInitTime);
                     mStartButtonColor = INITIAL_START_BUTTON_COLOR;
                     mStartButton.setBackgroundColor(mStartButtonColor);
                     mStartButton.setText(R.string.start);
+                    if (sPlayer != null) {
+                        sPlayer.release();
+                        sPlayer = null;
+                    }
                 }
                 break;
         }
