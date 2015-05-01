@@ -26,40 +26,32 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 public class MainFragment extends Fragment implements View.OnClickListener {
-    private final static String EXPERTS_SCORE_KEY = "experts_score_key";
-    private final static String VIEWERS_SCORE_KEY = "viewers_score_key";
-    private final static String INIT_TIME_KEY = "init_time_key";
-    private final static String ADD_MINUTES_KEY = "add_minutes_key";
-    private final static String START_BUTTON_COLOR_KEY = "start_button_color_key";
+    private static final String EXPERTS_SCORE_KEY = "experts_score_key";
+    private static final String VIEWERS_SCORE_KEY = "viewers_score_key";
+    private static final String INIT_TIME_KEY = "init_time_key";
+    private static final String ADD_MINUTES_KEY = "add_minutes_key";
+    private static final String START_BUTTON_COLOR_KEY = "start_button_color_key";
 
-    private static int STANDARD_TIME = 60;
-    private static int BLITZ_TIME = 20;
-
+    private static final int STANDARD_TIME = 60;
+    private static final int BLITZ_TIME = 20;
+    private static final Handler sHandler = new Handler();
+    private static final Handler sColorHandler = new Handler();
+    private static MediaPlayer sPlayer;
+    private static WeakReference<MainFragment> sCurrentFragment;
+    private static int sTime = -1;
     private TextView mExpertsScoreView;
     private TextView mViewersScoreView;
-
     private int mExpertsScore;
     private int mViewersScore;
-
     private TimerView mTimerView;
     private Button mStartButton;
     private int mInitTime;
-
-    private int mAdditionalMinutes;
-    private TextView mAdditionalMinutesView;
-
-    private static MediaPlayer sPlayer;
-
-    private static WeakReference<MainFragment> sCurrentFragment;
-
-    private static int sTime = -1;
-    private static final Handler sHandler = new Handler();
     private static final Runnable sRunnable = new Runnable() {
         @Override
         public void run() {
             MainFragment fragment = sCurrentFragment.get();
-            if(fragment != null && fragment.mTimerView != null) {
-                if(sTime > 1) {
+            if (fragment != null && fragment.mTimerView != null) {
+                if (sTime > 1) {
                     sTime--;
                     fragment.mTimerView.updateValue(sTime);
                     if (sTime == 10 && fragment.mInitTime == STANDARD_TIME) {
@@ -74,7 +66,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                         player.start();
                     }
                     sHandler.postDelayed(sRunnable, 1000);
-                } else if(sTime == 1) {
+                } else if (sTime == 1) {
                     sTime = -1;
                     fragment.mTimerView.updateValue(0);
                     fragment.mStartButton.setText(R.string.stop);
@@ -83,8 +75,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             }
         }
     };
-
-    private static final Handler sColorHandler = new Handler();
     private static final Runnable sColorRunnable = new Runnable() {
         @Override
         public void run() {
@@ -103,8 +93,10 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             }
         }
     };
+    private int mAdditionalMinutes;
+    private TextView mAdditionalMinutesView;
 
-    private void setPlayer(){
+    private void setPlayer() {
         sPlayer = new MediaPlayer();
         try {
             sPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
@@ -117,7 +109,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 }
             });
             sPlayer.start();
-        } catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -132,7 +124,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if(id == R.id.action_reset) {
+        if (id == R.id.action_reset) {
             mExpertsScore = 0;
             mViewersScore = 0;
             mExpertsScoreView.setText(String.valueOf(mExpertsScore));
@@ -264,7 +256,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.start_button:
                 if (sPlayer != null) {
                     sPlayer.release();
@@ -272,7 +264,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     mTimerView.updateValue(mInitTime);
                     mStartButton.setBackgroundColor(0xff00ff00);
                     mStartButton.setText(R.string.start);
-                } else if(sTime == -1) {
+                } else if (sTime == -1) {
                     sHandler.removeCallbacksAndMessages(null);
                     sColorHandler.removeCallbacksAndMessages(null);
                     sTime = mInitTime;
