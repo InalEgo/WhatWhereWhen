@@ -19,8 +19,6 @@ public class TimerView extends TextView {
     }
 
     public void updateValue(int seconds) {
-        int minutes = seconds / 60;
-        seconds %= 60;
-        setText(String.format("%d:%02d", minutes, seconds));
+        setText(String.format("%d:%02d", seconds / 60, seconds % 60));
     }
 }
