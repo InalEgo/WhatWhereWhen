@@ -250,7 +250,7 @@ public class MainFragment extends Fragment implements OnClickListener {
         mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
         if (sPlayer != null) {
             mStartButton.setText(R.string.stop);
-            mTimerView.updateValue(0);
+            mTimerView.updateValue(sTime);
         } else if (sTime == 0) {
             mTimerView.updateValue(mInitTime);
             mStartButton.setText(R.string.start);
