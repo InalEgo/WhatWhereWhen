@@ -172,13 +172,15 @@ public class MainFragment extends Fragment implements OnClickListener {
             public void onSwipeTop() {
                 if (mGameState.mExpertsScore + mGameState.mViewersScore < 11) {
                     ++mGameState.mExpertsScore;
+                    mExpertsScoreView.setText(String.valueOf(mGameState.mExpertsScore));
                 }
-                mExpertsScoreView.setText(String.valueOf(mGameState.mExpertsScore));
             }
 
             public void onSwipeBottom() {
-                mGameState.mExpertsScore = mGameState.mExpertsScore > 0 ? mGameState.mExpertsScore - 1 : 0;
-                mExpertsScoreView.setText(String.valueOf(mGameState.mExpertsScore));
+                if (mGameState.mExpertsScore > 0) {
+                    --mGameState.mExpertsScore;
+                    mExpertsScoreView.setText(String.valueOf(mGameState.mExpertsScore));
+                }
             }
         });
 
@@ -186,13 +188,15 @@ public class MainFragment extends Fragment implements OnClickListener {
             public void onSwipeTop() {
                 if (mGameState.mExpertsScore + mGameState.mViewersScore < 11) {
                     ++mGameState.mViewersScore;
+                    mViewersScoreView.setText(String.valueOf(mGameState.mViewersScore));
                 }
-                mViewersScoreView.setText(String.valueOf(mGameState.mViewersScore));
             }
 
             public void onSwipeBottom() {
-                mGameState.mViewersScore = mGameState.mViewersScore > 0 ? mGameState.mViewersScore - 1 : 0;
-                mViewersScoreView.setText(String.valueOf(mGameState.mViewersScore));
+                if (mGameState.mViewersScore > 0) {
+                    --mGameState.mViewersScore;
+                    mViewersScoreView.setText(String.valueOf(mGameState.mViewersScore));
+                }
             }
         });
 
@@ -216,14 +220,14 @@ public class MainFragment extends Fragment implements OnClickListener {
 
         mAdditionalMinutesView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
             public void onSwipeTop() {
-                if (mGameState.mAdditionalMinutes <= 4) {
+                if (mGameState.mAdditionalMinutes < 5) {
                     ++mGameState.mAdditionalMinutes;
                     mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
                 }
             }
 
             public void onSwipeBottom() {
-                if (mGameState.mAdditionalMinutes >= 0) {
+                if (mGameState.mAdditionalMinutes > 0) {
                     --mGameState.mAdditionalMinutes;
                     mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
                 }
