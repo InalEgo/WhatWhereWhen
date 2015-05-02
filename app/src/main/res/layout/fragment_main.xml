@@ -9,7 +9,6 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="MainFragment"
     tools:ignore="NestedWeights">
 
     <LinearLayout
@@ -19,7 +18,7 @@
         android:layout_weight="5"
         android:orientation="horizontal">
 
-        <TextView
+        <kankan.wheel.widget.WheelView
             android:id="@+id/expertsScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,7 +39,7 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="60sp" />
 
-        <TextView
+        <kankan.wheel.widget.WheelView
             android:id="@+id/viewersScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
