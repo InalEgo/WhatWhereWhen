@@ -24,7 +24,6 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
@@ -33,7 +32,9 @@ import kankan.wheel.widget.WheelView;
 import kankan.wheel.widget.adapters.ArrayWheelAdapter;
 
 public class MainFragment extends Fragment implements OnClickListener {
-    private static final String SCORE_WHEEL_ITEMS[] = {"11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "0"};
+    private static final String SCORE_WHEEL_ITEMS[] =
+            {"11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "0"};
+    private static final String ADD_MINUTES_WHEEL_ITEMS[] = {"5'", "4'", "3'", "2'", "1'", "0'"};
     private static final int INITIAL_START_BUTTON_COLOR = 0xff00ff00;
     private static final String GAME_STATE_KEY = "game_state_key";
     private static final String START_BUTTON_COLOR_KEY = "start_button_color_key";
@@ -44,10 +45,10 @@ public class MainFragment extends Fragment implements OnClickListener {
     private static MediaPlayer sPlayer;
     private static WeakReference<MainFragment> sCurrentFragment;
     private static int sTime;
+    private GameState mGameState;
     private WheelView mExpertsScoreView;
     private WheelView mViewersScoreView;
-    private GameState mGameState;
-    private TextView mAdditionalMinutesView;
+    private WheelView mAdditionalMinutesView;
     private TimerView mTimerView;
     private Button mStartButton;
     private static final Runnable sTimerRunnable = new Runnable() {
@@ -125,14 +126,22 @@ public class MainFragment extends Fragment implements OnClickListener {
         if (item.getItemId() == R.id.action_reset) {
             mGameState.mExpertsScore = 0;
             mGameState.mViewersScore = 0;
-            mExpertsScoreView.setCurrentItem(SCORE_WHEEL_ITEMS.length - 1 - mGameState.mExpertsScore);
-            mViewersScoreView.setCurrentItem(SCORE_WHEEL_ITEMS.length - 1 - mGameState.mViewersScore);
             mGameState.mAdditionalMinutes = 0;
-            mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
+            mExpertsScoreView.setCurrentItem(
+                    SCORE_WHEEL_ITEMS.length - 1 - mGameState.mExpertsScore);
+            mViewersScoreView.setCurrentItem(
+                    SCORE_WHEEL_ITEMS.length - 1 - mGameState.mViewersScore);
+            mAdditionalMinutesView.setCurrentItem(
+                    ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
             sTimerHandler.removeCallbacksAndMessages(null);
             sColorHandler.removeCallbacksAndMessages(null);
-            sTime = 0;
-            mTimerView.updateValue(mInitTime);
+            mExpertsScoreView.setEnabled(true);
+            mViewersScoreView.setEnabled(true);
+            mAdditionalMinutesView.setEnabled(true);
+            mGameState.setBlitz(false);
+            mInitTime = STANDARD_TIME;
+            sTime = mInitTime;
+            mTimerView.updateValue(sTime);
             mStartButtonColor = INITIAL_START_BUTTON_COLOR;
             mStartButton.setBackgroundColor(mStartButtonColor);
             mStartButton.setText(R.string.start);
@@ -171,6 +180,7 @@ public class MainFragment extends Fragment implements OnClickListener {
         } else {
             mGameState = new GameState();
             mInitTime = STANDARD_TIME;
+            sTime = mInitTime;
             mStartButtonColor = INITIAL_START_BUTTON_COLOR;
         }
 
@@ -181,6 +191,10 @@ public class MainFragment extends Fragment implements OnClickListener {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
                 mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+                if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+                    mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
+                    mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+                }
             }
         });
         mViewersScoreView = initWheel(rootView, R.id.viewersScore, SCORE_WHEEL_ITEMS);
@@ -188,44 +202,41 @@ public class MainFragment extends Fragment implements OnClickListener {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
                 mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+                if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+                    mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
+                    mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+                }
+            }
+        });
+
+        mAdditionalMinutesView = initWheel(rootView,
+                R.id.additional_minutes, ADD_MINUTES_WHEEL_ITEMS);
+        mAdditionalMinutesView.addChangingListener(new OnWheelChangedListener() {
+            @Override
+            public void onChanged(WheelView wheel, int oldValue, int newValue) {
+                mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
             }
         });
         mTimerView = (TimerView) rootView.findViewById(R.id.timer);
         mStartButton = (Button) rootView.findViewById(R.id.start_button);
-        mAdditionalMinutesView = (TextView) rootView.findViewById(R.id.additional_minutes);
-
         mStartButton.setOnClickListener(this);
 
         mTimerView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
             public void onSwipeLeft() {
-                if (sPlayer == null && sTime == 0) {
+                if (sPlayer == null && sTime == mInitTime) {
                     mGameState.setBlitz(!mGameState.isBlitz());
                     mInitTime = mGameState.isBlitz() ? BLITZ_TIME : STANDARD_TIME;
-                    mTimerView.updateValue(mInitTime);
+                    sTime = mInitTime;
+                    mTimerView.updateValue(sTime);
                 }
             }
 
             public void onSwipeRight() {
-                if (sPlayer == null && sTime == 0) {
+                if (sPlayer == null && sTime == mInitTime) {
                     mGameState.setBlitz(!mGameState.isBlitz());
                     mInitTime = mGameState.isBlitz() ? BLITZ_TIME : STANDARD_TIME;
-                    mTimerView.updateValue(mInitTime);
-                }
-            }
-        });
-
-        mAdditionalMinutesView.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
-            public void onSwipeTop() {
-                if (mGameState.mAdditionalMinutes < 5) {
-                    ++mGameState.mAdditionalMinutes;
-                    mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
-                }
-            }
-
-            public void onSwipeBottom() {
-                if (mGameState.mAdditionalMinutes > 0) {
-                    --mGameState.mAdditionalMinutes;
-                    mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
+                    sTime = mInitTime;
+                    mTimerView.updateValue(sTime);
                 }
             }
         });
@@ -246,17 +257,21 @@ public class MainFragment extends Fragment implements OnClickListener {
         super.onResume();
         mExpertsScoreView.setCurrentItem(SCORE_WHEEL_ITEMS.length - 1 - mGameState.mExpertsScore);
         mViewersScoreView.setCurrentItem(SCORE_WHEEL_ITEMS.length - 1 - mGameState.mViewersScore);
-        mAdditionalMinutesView.setText(mGameState.mAdditionalMinutes + "'");
-        if (sPlayer != null) {
-            mStartButton.setText(R.string.stop);
-            mTimerView.updateValue(sTime);
-        } else if (sTime == 0) {
-            mTimerView.updateValue(mInitTime);
+        mAdditionalMinutesView.setCurrentItem(
+                ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
+        if (sTime == mInitTime) {
             mStartButton.setText(R.string.start);
         } else {
-            mTimerView.updateValue(sTime);
-            mStartButton.setText(R.string.reset);
+            mExpertsScoreView.setEnabled(false);
+            mViewersScoreView.setEnabled(false);
+            mAdditionalMinutesView.setEnabled(false);
+            if (sPlayer != null) {
+                mStartButton.setText(R.string.stop);
+            } else {
+                mStartButton.setText(R.string.reset);
+            }
         }
+        mTimerView.updateValue(sTime);
         mStartButton.setBackgroundColor(mStartButtonColor);
     }
 
@@ -266,20 +281,25 @@ public class MainFragment extends Fragment implements OnClickListener {
             case R.id.start_button:
                 sTimerHandler.removeCallbacksAndMessages(null);
                 sColorHandler.removeCallbacksAndMessages(null);
-                if (sPlayer == null && sTime == 0) {
-                    sTime = mInitTime;
+                if (sPlayer == null && sTime == mInitTime) {
                     mStartButton.setText(R.string.reset);
                     ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
                     tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
+                    mExpertsScoreView.setEnabled(false);
+                    mViewersScoreView.setEnabled(false);
+                    mAdditionalMinutesView.setEnabled(false);
                     sTimerHandler.postDelayed(sTimerRunnable, 1000);
                     sColorHandler.postDelayed(sColorRunnable,
                             mGameState.isBlitz() ? 1000 / 13 : 3000 / 13);
                 } else {
-                    sTime = 0;
-                    mTimerView.updateValue(mInitTime);
+                    sTime = mInitTime;
+                    mTimerView.updateValue(sTime);
                     mStartButtonColor = INITIAL_START_BUTTON_COLOR;
                     mStartButton.setBackgroundColor(mStartButtonColor);
                     mStartButton.setText(R.string.start);
+                    mExpertsScoreView.setEnabled(true);
+                    mViewersScoreView.setEnabled(true);
+                    mAdditionalMinutesView.setEnabled(true);
                     if (sPlayer != null) {
                         sPlayer.release();
                         sPlayer = null;

@@ -25,7 +25,6 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="@string/zero"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="60sp" />
 
@@ -46,7 +45,6 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="@string/zero"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="60sp" />
     </LinearLayout>
@@ -66,12 +64,11 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="60sp" />
 
-        <TextView
+        <kankan.wheel.widget.WheelView
             android:id="@+id/additional_minutes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="@string/zero_minutes"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="60sp" />
 
