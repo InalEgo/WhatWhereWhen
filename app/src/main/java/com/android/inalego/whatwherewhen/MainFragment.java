@@ -160,6 +160,7 @@ public class MainFragment extends Fragment implements OnClickListener {
         ArrayWheelAdapter<String> wheelAdapter = new ArrayWheelAdapter<>(getActivity(), wheelMenu);
         wheelAdapter.setTextSize(60);
         wheelAdapter.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        wheelAdapter.setTextColor(0xffff0000);
         wheel.setViewAdapter(wheelAdapter);
         wheel.setDrawCenterRect(false);
         wheel.setDrawShadows(false);

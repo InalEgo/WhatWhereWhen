@@ -2,7 +2,6 @@
     <string name="app_name">Что? Где? Когда?</string>
     <string name="start">Старт</string>
     <string name="reset">Сброс</string>
-    <string name="zero_zero_zero">0:00</string>
     <string name="colon">:</string>
     <string name="stop">Стоп</string>
 </resources>
