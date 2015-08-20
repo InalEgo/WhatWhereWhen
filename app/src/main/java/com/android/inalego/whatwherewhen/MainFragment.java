@@ -176,6 +176,9 @@ public class MainFragment extends Fragment implements OnClickListener {
 
         if (savedInstanceState != null) {
             mGameState = savedInstanceState.getParcelable(GAME_STATE_KEY);
+            if (mGameState == null) {
+                mGameState = new GameState();
+            }
             mInitTime = mGameState.isBlitz() ? BLITZ_TIME : STANDARD_TIME;
             mStartButtonColor = savedInstanceState.getInt(START_BUTTON_COLOR_KEY);
         } else {
