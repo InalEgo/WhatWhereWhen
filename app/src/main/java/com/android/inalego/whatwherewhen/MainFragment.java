@@ -28,6 +28,7 @@ import android.widget.Button;
 import java.lang.ref.WeakReference;
 
 import kankan.wheel.widget.OnWheelChangedListener;
+import kankan.wheel.widget.OnWheelScrollListener;
 import kankan.wheel.widget.WheelView;
 import kankan.wheel.widget.adapters.ArrayWheelAdapter;
 
@@ -47,7 +48,9 @@ public class MainFragment extends Fragment implements OnClickListener {
     private static int sTime;
     private GameState mGameState;
     private WheelView mExpertsScoreView;
+    private boolean mIsExpertsScoreChanged;
     private WheelView mViewersScoreView;
+    private boolean mIsViewersScoreChanged;
     private WheelView mAdditionalMinutesView;
     private TimerView mTimerView;
     private Button mStartButton;
@@ -194,25 +197,56 @@ public class MainFragment extends Fragment implements OnClickListener {
         mExpertsScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
-                    mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
+                if (mIsExpertsScoreChanged) {
                     mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+                } else {
+                    mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+                    mIsExpertsScoreChanged = true;
+                    if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+                        mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
+                        mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+                    }
                 }
+            }
+        });
+        mExpertsScoreView.addScrollingListener(new OnWheelScrollListener() {
+            @Override
+            public void onScrollingStarted(WheelView wheel) {
+                mIsExpertsScoreChanged = false;
+            }
+
+            @Override
+            public void onScrollingFinished(WheelView wheel) {
+                mIsExpertsScoreChanged = false;
             }
         });
         mViewersScoreView = initWheel(rootView, R.id.viewersScore, SCORE_WHEEL_ITEMS);
         mViewersScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
-                    mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
+                if (mIsViewersScoreChanged) {
                     mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+                } else {
+                    mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+                    mIsViewersScoreChanged = true;
+                    if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+                        mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
+                        mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+                    }
                 }
             }
         });
+        mViewersScoreView.addScrollingListener(new OnWheelScrollListener() {
+            @Override
+            public void onScrollingStarted(WheelView wheel) {
+                mIsViewersScoreChanged = false;
+            }
 
+            @Override
+            public void onScrollingFinished(WheelView wheel) {
+                mIsViewersScoreChanged = false;
+            }
+        });
         mAdditionalMinutesView = initWheel(rootView,
                 R.id.additional_minutes, ADD_MINUTES_WHEEL_ITEMS);
         mAdditionalMinutesView.addChangingListener(new OnWheelChangedListener() {
