@@ -48,10 +48,11 @@ public class MainFragment extends Fragment implements OnClickListener {
     private static int sTime;
     private GameState mGameState;
     private WheelView mExpertsScoreView;
-    private boolean mIsExpertsScoreChanged;
+    private boolean mExpertsScoreChanged;
     private WheelView mViewersScoreView;
-    private boolean mIsViewersScoreChanged;
+    private boolean mViewersScoreChanged;
     private WheelView mAdditionalMinutesView;
+    private boolean mAdditionalMinutesChanged;
     private TimerView mTimerView;
     private Button mStartButton;
     private static final Runnable sTimerRunnable = new Runnable() {
@@ -138,10 +139,13 @@ public class MainFragment extends Fragment implements OnClickListener {
                     ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
             sTimerHandler.removeCallbacksAndMessages(null);
             sColorHandler.removeCallbacksAndMessages(null);
-            mExpertsScoreView.setEnabled(true);
-            mViewersScoreView.setEnabled(true);
+            mExpertsScoreView.setEnabled(false);
+            mViewersScoreView.setEnabled(false);
             mAdditionalMinutesView.setEnabled(true);
+            mTimerView.setEnabled(true);
+            mStartButton.setEnabled(true);
             mGameState.setBlitz(false);
+            mGameState.mBlitzCounter = 0;
             mInitTime = STANDARD_TIME;
             sTime = mInitTime;
             mTimerView.updateValue(sTime);
@@ -197,11 +201,13 @@ public class MainFragment extends Fragment implements OnClickListener {
         mExpertsScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                if (mIsExpertsScoreChanged) {
+                if (mExpertsScoreChanged) {
                     mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
                 } else {
                     mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                    mIsExpertsScoreChanged = true;
+                    if (oldValue > newValue) {
+                        mExpertsScoreChanged = true;
+                    }
                     if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
                         mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
                         mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
@@ -212,23 +218,33 @@ public class MainFragment extends Fragment implements OnClickListener {
         mExpertsScoreView.addScrollingListener(new OnWheelScrollListener() {
             @Override
             public void onScrollingStarted(WheelView wheel) {
-                mIsExpertsScoreChanged = false;
+                mExpertsScoreChanged = false;
             }
 
             @Override
             public void onScrollingFinished(WheelView wheel) {
-                mIsExpertsScoreChanged = false;
+                if (mExpertsScoreChanged) {
+                    mExpertsScoreView.setEnabled(false);
+                    mViewersScoreView.setEnabled(false);
+                    mAdditionalMinutesView.setEnabled(true);
+                    mTimerView.setEnabled(true);
+                    mStartButton.setEnabled(true);
+                    mGameState.mBlitzCounter = 0;
+                }
+                mExpertsScoreChanged = false;
             }
         });
         mViewersScoreView = initWheel(rootView, R.id.viewersScore, SCORE_WHEEL_ITEMS);
         mViewersScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                if (mIsViewersScoreChanged) {
+                if (mViewersScoreChanged) {
                     mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
                 } else {
                     mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                    mIsViewersScoreChanged = true;
+                    if (oldValue > newValue) {
+                        mViewersScoreChanged = true;
+                    }
                     if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
                         mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
                         mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
@@ -239,12 +255,23 @@ public class MainFragment extends Fragment implements OnClickListener {
         mViewersScoreView.addScrollingListener(new OnWheelScrollListener() {
             @Override
             public void onScrollingStarted(WheelView wheel) {
-                mIsViewersScoreChanged = false;
+                mViewersScoreChanged = false;
             }
 
             @Override
             public void onScrollingFinished(WheelView wheel) {
-                mIsViewersScoreChanged = false;
+                if (mViewersScoreChanged) {
+                    mExpertsScoreView.setEnabled(false);
+                    mViewersScoreView.setEnabled(false);
+                    mAdditionalMinutesView.setEnabled(true);
+                    mTimerView.setEnabled(true);
+                    mStartButton.setEnabled(true);
+                    if (mGameState.mBlitzCounter != 0) {
+                        ++mGameState.mMinutesCounter;
+                    }
+                    mGameState.mBlitzCounter = 0;
+                }
+                mViewersScoreChanged = false;
             }
         });
         mAdditionalMinutesView = initWheel(rootView,
@@ -252,9 +279,35 @@ public class MainFragment extends Fragment implements OnClickListener {
         mAdditionalMinutesView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
+                if (mAdditionalMinutesChanged) {
+                    mAdditionalMinutesView.setCurrentItem(5 - mGameState.mAdditionalMinutes, true);
+                } else {
+                    mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
+                    if (oldValue > newValue) {
+                        mAdditionalMinutesChanged = true;
+                    }
+                }
             }
         });
+        mAdditionalMinutesView.addScrollingListener(new OnWheelScrollListener() {
+            @Override
+            public void onScrollingStarted(WheelView wheel) {
+                mAdditionalMinutesChanged = false;
+            }
+
+            @Override
+            public void onScrollingFinished(WheelView wheel) {
+                if (mAdditionalMinutesChanged) {
+                    mExpertsScoreView.setEnabled(true);
+                    mViewersScoreView.setEnabled(false);
+                    mAdditionalMinutesView.setEnabled(false);
+                    mTimerView.setEnabled(false);
+                    mStartButton.setEnabled(false);
+                }
+                mAdditionalMinutesChanged = false;
+            }
+        });
+
         mTimerView = (TimerView) rootView.findViewById(R.id.timer);
         mStartButton = (Button) rootView.findViewById(R.id.start_button);
         mStartButton.setOnClickListener(this);
@@ -299,10 +352,16 @@ public class MainFragment extends Fragment implements OnClickListener {
                 ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
         if (sTime == mInitTime) {
             mStartButton.setText(R.string.start);
+            mExpertsScoreView.setEnabled(false);
+            mViewersScoreView.setEnabled(false);
+            mAdditionalMinutesView.setEnabled(true);
+            mTimerView.setEnabled(true);
+            mStartButton.setEnabled(true);
         } else {
             mExpertsScoreView.setEnabled(false);
             mViewersScoreView.setEnabled(false);
             mAdditionalMinutesView.setEnabled(false);
+            mTimerView.setEnabled(false);
             if (sPlayer != null) {
                 mStartButton.setText(R.string.stop);
             } else {
@@ -326,6 +385,7 @@ public class MainFragment extends Fragment implements OnClickListener {
                     mExpertsScoreView.setEnabled(false);
                     mViewersScoreView.setEnabled(false);
                     mAdditionalMinutesView.setEnabled(false);
+                    mTimerView.setEnabled(false);
                     sTimerHandler.postDelayed(sTimerRunnable, 1000);
                     sColorHandler.postDelayed(sColorRunnable,
                             mGameState.isBlitz() ? 1000 / 13 : 3000 / 13);
@@ -335,12 +395,37 @@ public class MainFragment extends Fragment implements OnClickListener {
                     mStartButtonColor = INITIAL_START_BUTTON_COLOR;
                     mStartButton.setBackgroundColor(mStartButtonColor);
                     mStartButton.setText(R.string.start);
-                    mExpertsScoreView.setEnabled(true);
-                    mViewersScoreView.setEnabled(true);
                     mAdditionalMinutesView.setEnabled(true);
+                    mTimerView.setEnabled(true);
+                    mStartButton.setEnabled(true);
                     if (sPlayer != null) {
                         sPlayer.release();
                         sPlayer = null;
+                        if (!mGameState.isBlitz()) {
+                            ++mGameState.mMinutesCounter;
+                            mExpertsScoreView.setEnabled(true);
+                            mViewersScoreView.setEnabled(true);
+                            mAdditionalMinutesView.setEnabled(false);
+                            mTimerView.setEnabled(false);
+                            mStartButton.setEnabled(false);
+                        } else {
+                            ++mGameState.mBlitzCounter;
+                            if (mGameState.mBlitzCounter < 3) {
+                                mExpertsScoreView.setEnabled(false);
+                                mViewersScoreView.setEnabled(true);
+                                mAdditionalMinutesView.setEnabled(false);
+                                mTimerView.setEnabled(true);
+                                mStartButton.setEnabled(true);
+                            } else if (mGameState.mBlitzCounter == 3) {
+                                ++mGameState.mMinutesCounter;
+                                mGameState.mBlitzCounter = 0;
+                                mExpertsScoreView.setEnabled(true);
+                                mViewersScoreView.setEnabled(true);
+                                mAdditionalMinutesView.setEnabled(false);
+                                mTimerView.setEnabled(false);
+                                mStartButton.setEnabled(false);
+                            }
+                        }
                     }
                 }
                 break;
@@ -361,6 +446,8 @@ public class MainFragment extends Fragment implements OnClickListener {
         private int mExpertsScore;
         private int mViewersScore;
         private int mAdditionalMinutes;
+        private int mMinutesCounter;
+        private int mBlitzCounter;
         private boolean mBlitz;
 
         public GameState() {
@@ -370,6 +457,8 @@ public class MainFragment extends Fragment implements OnClickListener {
             mExpertsScore = in.readInt();
             mViewersScore = in.readInt();
             mAdditionalMinutes = in.readInt();
+            mMinutesCounter = in.readInt();
+            mBlitzCounter = in.readInt();
             mBlitz = in.readInt() != 0;
         }
 
@@ -381,6 +470,10 @@ public class MainFragment extends Fragment implements OnClickListener {
             mBlitz = blitz;
         }
 
+        public boolean isValid() {
+            return mMinutesCounter + mAdditionalMinutes == mExpertsScore + mViewersScore;
+        }
+
         public int describeContents() {
             return 0;
         }
@@ -389,6 +482,8 @@ public class MainFragment extends Fragment implements OnClickListener {
             out.writeInt(mExpertsScore);
             out.writeInt(mViewersScore);
             out.writeInt(mAdditionalMinutes);
+            out.writeInt(mMinutesCounter);
+            out.writeInt(mBlitzCounter);
             out.writeInt(mBlitz ? 1 : 0);
         }
     }
