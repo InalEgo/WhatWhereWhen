@@ -155,17 +155,6 @@ public class MainFragment extends Fragment implements OnClickListener {
         mStartButton.setEnabled(false);
     }
 
-    private void activateTimer() {
-        if (mFreeMode) {
-            return;
-        }
-        mExpertsScoreView.setEnabled(false);
-        mViewersScoreView.setEnabled(false);
-        mAdditionalMinutesView.setEnabled(false);
-        mTimerView.setEnabled(true);
-        mStartButton.setEnabled(true);
-    }
-
     private void activateTimerAndMinutes() {
         if (mFreeMode) {
             return;
@@ -356,13 +345,6 @@ public class MainFragment extends Fragment implements OnClickListener {
                     setExpertsScore(newValue);
                 } else {
                     mExpertsScoreChanged = oldValue > newValue;
-//                    if (mExpertsScoreChanged || oldValue < newValue) {
-//                        mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
-//                        mExpertsScoreChanged = false;
-//                    } else {
-//                        setExpertsScore(newValue);
-//                        mExpertsScoreChanged = true;
-//                    }
                 }
             }
         });
@@ -394,13 +376,6 @@ public class MainFragment extends Fragment implements OnClickListener {
                     setViewersScore(newValue);
                 } else {
                     mViewersScoreChanged = oldValue > newValue;
-//                    if (mViewersScoreChanged || oldValue < newValue) {
-//                        mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
-//                        mViewersScoreChanged = false;
-//                    } else {
-//                        setViewersScore(newValue);
-//                        mViewersScoreChanged = true;
-//                    }
                 }
             }
         });
@@ -435,13 +410,6 @@ public class MainFragment extends Fragment implements OnClickListener {
                 } else {
                     mAdditionalMinutesChanged = mAdditionalMinutesDecreasable ?
                             oldValue < newValue : oldValue > newValue;
-//                    if (mAdditionalMinutesChanged) {
-//                        mAdditionalMinutesView.setCurrentItem(5 - mGameState.mAdditionalMinutes, true);
-//                    } else {
-//                        mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
-//                        mAdditionalMinutesChanged = true;
-//                        mAdditionalMinutesDecreased = oldValue < newValue;
-//                    }
                 }
             }
         });
@@ -456,7 +424,7 @@ public class MainFragment extends Fragment implements OnClickListener {
                 if (mAdditionalMinutesChanged) {
                     if (mAdditionalMinutesDecreasable) {
                         --mGameState.mAdditionalMinutes;
-                        activateTimer();
+                        activateStartButton();
                     } else {
                         ++mGameState.mAdditionalMinutes;
                         activateExpertsScore();

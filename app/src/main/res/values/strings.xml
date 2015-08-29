@@ -4,6 +4,6 @@
     <string name="reset">Сброс</string>
     <string name="colon">:</string>
     <string name="stop">Стоп</string>
-    <string name="free_mode">Свободный режим</string>
-    <string name="rigid_mode">Жёсткий режим</string>
+    <string name="free_mode">Вкл. свободный режим</string>
+    <string name="rigid_mode">Выкл. свободный режим</string>
 </resources>
