@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 
 import java.lang.ref.WeakReference;
@@ -53,6 +54,7 @@ public class MainFragment extends Fragment implements OnClickListener {
     private boolean mViewersScoreChanged;
     private WheelView mAdditionalMinutesView;
     private boolean mAdditionalMinutesChanged;
+    private boolean mAdditionalMinutesDecreasable;
     private TimerView mTimerView;
     private Button mStartButton;
     private static final Runnable sTimerRunnable = new Runnable() {
@@ -69,6 +71,7 @@ public class MainFragment extends Fragment implements OnClickListener {
             sCurrentFragment.get().handleColor();
         }
     };
+    private boolean mFreeMode;
 
     private void handleTimer() {
         if (sTime > 0) {
@@ -119,6 +122,85 @@ public class MainFragment extends Fragment implements OnClickListener {
         }
     }
 
+    private void activateExpertsScore() {
+        if (mFreeMode) {
+            return;
+        }
+        mExpertsScoreView.setEnabled(true);
+        mViewersScoreView.setEnabled(false);
+        mAdditionalMinutesView.setEnabled(false);
+        mTimerView.setEnabled(false);
+        mStartButton.setEnabled(false);
+    }
+
+    private void activateViewersScore() {
+        if (mFreeMode) {
+            return;
+        }
+        mExpertsScoreView.setEnabled(false);
+        mViewersScoreView.setEnabled(true);
+        mAdditionalMinutesView.setEnabled(false);
+        mTimerView.setEnabled(true);
+        mStartButton.setEnabled(true);
+    }
+
+    private void activateScores() {
+        if (mFreeMode) {
+            return;
+        }
+        mExpertsScoreView.setEnabled(true);
+        mViewersScoreView.setEnabled(true);
+        mAdditionalMinutesView.setEnabled(false);
+        mTimerView.setEnabled(false);
+        mStartButton.setEnabled(false);
+    }
+
+    private void activateTimer() {
+        if (mFreeMode) {
+            return;
+        }
+        mExpertsScoreView.setEnabled(false);
+        mViewersScoreView.setEnabled(false);
+        mAdditionalMinutesView.setEnabled(false);
+        mTimerView.setEnabled(true);
+        mStartButton.setEnabled(true);
+    }
+
+    private void activateTimerAndMinutes() {
+        if (mFreeMode) {
+            return;
+        }
+        mExpertsScoreView.setEnabled(false);
+        mViewersScoreView.setEnabled(false);
+        mAdditionalMinutesView.setEnabled(true);
+        mTimerView.setEnabled(true);
+        mStartButton.setEnabled(true);
+    }
+
+    private void activateStartButton() {
+        mExpertsScoreView.setEnabled(false);
+        mViewersScoreView.setEnabled(false);
+        mAdditionalMinutesView.setEnabled(false);
+        mTimerView.setEnabled(false);
+        mStartButton.setEnabled(true);
+    }
+
+    private void activateScoresAndAdditionalMinutes() {
+        mExpertsScoreView.setEnabled(true);
+        mViewersScoreView.setEnabled(true);
+        mAdditionalMinutesView.setEnabled(true);
+        mTimerView.setEnabled(false);
+        mStartButton.setEnabled(false);
+    }
+
+    private void activateAll() {
+        mExpertsScoreView.setEnabled(true);
+        mViewersScoreView.setEnabled(true);
+        mAdditionalMinutesView.setEnabled(true);
+        mTimerView.setEnabled(true);
+        mStartButton.setEnabled(true);
+    }
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -131,19 +213,8 @@ public class MainFragment extends Fragment implements OnClickListener {
             mGameState.mExpertsScore = 0;
             mGameState.mViewersScore = 0;
             mGameState.mAdditionalMinutes = 0;
-            mExpertsScoreView.setCurrentItem(
-                    SCORE_WHEEL_ITEMS.length - 1 - mGameState.mExpertsScore);
-            mViewersScoreView.setCurrentItem(
-                    SCORE_WHEEL_ITEMS.length - 1 - mGameState.mViewersScore);
-            mAdditionalMinutesView.setCurrentItem(
-                    ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
             sTimerHandler.removeCallbacksAndMessages(null);
             sColorHandler.removeCallbacksAndMessages(null);
-            mExpertsScoreView.setEnabled(false);
-            mViewersScoreView.setEnabled(false);
-            mAdditionalMinutesView.setEnabled(true);
-            mTimerView.setEnabled(true);
-            mStartButton.setEnabled(true);
             mGameState.setBlitz(false);
             mGameState.mBlitzCounter = 0;
             mInitTime = STANDARD_TIME;
@@ -156,24 +227,103 @@ public class MainFragment extends Fragment implements OnClickListener {
                 sPlayer.release();
                 sPlayer = null;
             }
+            if (mFreeMode) {
+                setFreeModeState();
+            } else {
+                setRigidModeState();
+            }
+            return true;
+        } else if (item.getItemId() == R.id.action_mode) {
+            if (item.getTitle().equals(getString(R.string.free_mode))) {
+                mFreeMode = true;
+                item.setTitle(R.string.rigid_mode);
+                setFreeModeState();
+            } else {
+                mFreeMode = false;
+                item.setTitle(R.string.free_mode);
+                setRigidModeState();
+            }
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private WheelView initWheel(View rootView, int id, String[] wheelMenu) {
+    private void setFreeModeState() {
+        setWheelItems(mExpertsScoreView, SCORE_WHEEL_ITEMS);
+        setWheelItems(mViewersScoreView, SCORE_WHEEL_ITEMS);
+        setWheelItems(mAdditionalMinutesView, ADD_MINUTES_WHEEL_ITEMS);
+        mExpertsScoreView.setCurrentItem(
+                SCORE_WHEEL_ITEMS.length - 1 - mGameState.mExpertsScore);
+        mViewersScoreView.setCurrentItem(
+                SCORE_WHEEL_ITEMS.length - 1 - mGameState.mViewersScore);
+        mAdditionalMinutesView.setCurrentItem(
+                ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
+        activateAll();
+    }
+
+    private void setRigidModeState() {
+        setScoreItems(mExpertsScoreView, mGameState.mExpertsScore);
+        setScoreItems(mViewersScoreView, mGameState.mViewersScore);
+        setAdditionalMinutesItems();
+        activateTimerAndMinutes();
+    }
+
+    private WheelView initWheel(View rootView, int id) {
         WheelView wheel = (WheelView) rootView.findViewById(id);
-        ArrayWheelAdapter<String> wheelAdapter = new ArrayWheelAdapter<>(getActivity(), wheelMenu);
-        wheelAdapter.setTextSize(60);
-        wheelAdapter.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-        wheelAdapter.setTextColor(0xffff0000);
-        wheel.setViewAdapter(wheelAdapter);
         wheel.setDrawCenterRect(false);
         wheel.setDrawShadows(false);
         wheel.setBackgroundNeeded(false);
         wheel.setVisibleItems(1);
         return wheel;
+    }
+
+    private void setWheelItems(WheelView view, String[] wheelMenu) {
+        ArrayWheelAdapter<String> wheelAdapter = new ArrayWheelAdapter<>(getActivity(), wheelMenu);
+        wheelAdapter.setTextSize(60);
+        wheelAdapter.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        wheelAdapter.setTextColor(0xffff0000);
+        view.setViewAdapter(wheelAdapter);
+    }
+
+    private void setScoreItems(WheelView view, int score) {
+        String[] items;
+        if (mGameState.mExpertsScore + mGameState.mViewersScore == 11) {
+            items = new String[]{String.valueOf(score)};
+        } else {
+            items = new String[]{
+                    String.valueOf(score + 1),
+                    String.valueOf(score)};
+        }
+        setWheelItems(view, items);
+        view.setCurrentItem(items.length - 1);
+    }
+
+    private void setAdditionalMinutesItems() {
+        String[] items;
+        int pos;
+        if (mAdditionalMinutesDecreasable) {
+            if (mGameState.mAdditionalMinutes == 0) {
+                items = new String[]{"0"};
+            } else {
+                items = new String[]{
+                        String.valueOf(mGameState.mAdditionalMinutes),
+                        String.valueOf(mGameState.mAdditionalMinutes - 1)};
+            }
+            pos = 0;
+        } else {
+            if (mGameState.mAdditionalMinutes == ADD_MINUTES_WHEEL_ITEMS.length - 1) {
+                items = new String[]{String.valueOf(mGameState.mAdditionalMinutes)};
+                pos = 0;
+            } else {
+                items = new String[]{
+                        String.valueOf(mGameState.mAdditionalMinutes + 1),
+                        String.valueOf(mGameState.mAdditionalMinutes)};
+                pos = 1;
+            }
+        }
+        setWheelItems(mAdditionalMinutesView, items);
+        mAdditionalMinutesView.setCurrentItem(pos);
     }
 
     @Override
@@ -197,21 +347,22 @@ public class MainFragment extends Fragment implements OnClickListener {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mExpertsScoreView = initWheel(rootView, R.id.expertsScore, SCORE_WHEEL_ITEMS);
+        mExpertsScoreView = initWheel(rootView, R.id.expertsScore);
+        setScoreItems(mExpertsScoreView, mGameState.mExpertsScore);
         mExpertsScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                if (mExpertsScoreChanged) {
-                    mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+                if (mFreeMode) {
+                    setExpertsScore(newValue);
                 } else {
-                    mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                    if (oldValue > newValue) {
-                        mExpertsScoreChanged = true;
-                    }
-                    if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
-                        mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
-                        mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
-                    }
+                    mExpertsScoreChanged = oldValue > newValue;
+//                    if (mExpertsScoreChanged || oldValue < newValue) {
+//                        mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+//                        mExpertsScoreChanged = false;
+//                    } else {
+//                        setExpertsScore(newValue);
+//                        mExpertsScoreChanged = true;
+//                    }
                 }
             }
         });
@@ -223,32 +374,33 @@ public class MainFragment extends Fragment implements OnClickListener {
 
             @Override
             public void onScrollingFinished(WheelView wheel) {
-                if (mExpertsScoreChanged) {
-                    mExpertsScoreView.setEnabled(false);
-                    mViewersScoreView.setEnabled(false);
-                    mAdditionalMinutesView.setEnabled(true);
-                    mTimerView.setEnabled(true);
-                    mStartButton.setEnabled(true);
+                if (mExpertsScoreChanged && !mFreeMode) {
+                    ++mGameState.mExpertsScore;
+                    setScoreItems(mExpertsScoreView, mGameState.mExpertsScore);
+                    activateTimerAndMinutes();
                     mGameState.mBlitzCounter = 0;
+                    setScreenBrightness(10);
                 }
                 mExpertsScoreChanged = false;
             }
         });
-        mViewersScoreView = initWheel(rootView, R.id.viewersScore, SCORE_WHEEL_ITEMS);
+
+        mViewersScoreView = initWheel(rootView, R.id.viewersScore);
+        setScoreItems(mViewersScoreView, mGameState.mViewersScore);
         mViewersScoreView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                if (mViewersScoreChanged) {
-                    mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+                if (mFreeMode) {
+                    setViewersScore(newValue);
                 } else {
-                    mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
-                    if (oldValue > newValue) {
-                        mViewersScoreChanged = true;
-                    }
-                    if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
-                        mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
-                        mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
-                    }
+                    mViewersScoreChanged = oldValue > newValue;
+//                    if (mViewersScoreChanged || oldValue < newValue) {
+//                        mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+//                        mViewersScoreChanged = false;
+//                    } else {
+//                        setViewersScore(newValue);
+//                        mViewersScoreChanged = true;
+//                    }
                 }
             }
         });
@@ -260,32 +412,36 @@ public class MainFragment extends Fragment implements OnClickListener {
 
             @Override
             public void onScrollingFinished(WheelView wheel) {
-                if (mViewersScoreChanged) {
-                    mExpertsScoreView.setEnabled(false);
-                    mViewersScoreView.setEnabled(false);
-                    mAdditionalMinutesView.setEnabled(true);
-                    mTimerView.setEnabled(true);
-                    mStartButton.setEnabled(true);
+                if (mViewersScoreChanged && !mFreeMode) {
+                    ++mGameState.mViewersScore;
+                    setScoreItems(mViewersScoreView, mGameState.mViewersScore);
+                    activateTimerAndMinutes();
                     if (mGameState.mBlitzCounter != 0) {
                         ++mGameState.mMinutesCounter;
                     }
                     mGameState.mBlitzCounter = 0;
+                    setScreenBrightness(10);
                 }
                 mViewersScoreChanged = false;
             }
         });
-        mAdditionalMinutesView = initWheel(rootView,
-                R.id.additional_minutes, ADD_MINUTES_WHEEL_ITEMS);
+        mAdditionalMinutesView = initWheel(rootView, R.id.additional_minutes);
+        setAdditionalMinutesItems();
         mAdditionalMinutesView.addChangingListener(new OnWheelChangedListener() {
             @Override
             public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                if (mAdditionalMinutesChanged) {
-                    mAdditionalMinutesView.setCurrentItem(5 - mGameState.mAdditionalMinutes, true);
-                } else {
+                if (mFreeMode) {
                     mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
-                    if (oldValue > newValue) {
-                        mAdditionalMinutesChanged = true;
-                    }
+                } else {
+                    mAdditionalMinutesChanged = mAdditionalMinutesDecreasable ?
+                            oldValue < newValue : oldValue > newValue;
+//                    if (mAdditionalMinutesChanged) {
+//                        mAdditionalMinutesView.setCurrentItem(5 - mGameState.mAdditionalMinutes, true);
+//                    } else {
+//                        mGameState.mAdditionalMinutes = ADD_MINUTES_WHEEL_ITEMS.length - 1 - newValue;
+//                        mAdditionalMinutesChanged = true;
+//                        mAdditionalMinutesDecreased = oldValue < newValue;
+//                    }
                 }
             }
         });
@@ -298,11 +454,15 @@ public class MainFragment extends Fragment implements OnClickListener {
             @Override
             public void onScrollingFinished(WheelView wheel) {
                 if (mAdditionalMinutesChanged) {
-                    mExpertsScoreView.setEnabled(true);
-                    mViewersScoreView.setEnabled(false);
-                    mAdditionalMinutesView.setEnabled(false);
-                    mTimerView.setEnabled(false);
-                    mStartButton.setEnabled(false);
+                    if (mAdditionalMinutesDecreasable) {
+                        --mGameState.mAdditionalMinutes;
+                        activateTimer();
+                    } else {
+                        ++mGameState.mAdditionalMinutes;
+                        activateExpertsScore();
+                    }
+                    mAdditionalMinutesDecreasable = false;
+                    setAdditionalMinutesItems();
                 }
                 mAdditionalMinutesChanged = false;
             }
@@ -332,8 +492,38 @@ public class MainFragment extends Fragment implements OnClickListener {
             }
         });
 
+        rootView.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                setScreenBrightness(50);
+                return false;
+            }
+        });
+
         setHasOptionsMenu(true);
         return rootView;
+    }
+
+    private void setScreenBrightness(int percent) {
+        WindowManager.LayoutParams lp = getActivity().getWindow().getAttributes();
+        lp.screenBrightness = percent / 100.0f;
+        getActivity().getWindow().setAttributes(lp);
+    }
+
+    private void setViewersScore(int newValue) {
+        mGameState.mViewersScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+        if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+            mGameState.mViewersScore = 11 - mGameState.mExpertsScore;
+            mViewersScoreView.setCurrentItem(11 - mGameState.mViewersScore, true);
+        }
+    }
+
+    private void setExpertsScore(int newValue) {
+        mGameState.mExpertsScore = SCORE_WHEEL_ITEMS.length - 1 - newValue;
+        if (mGameState.mExpertsScore + mGameState.mViewersScore > 11) {
+            mGameState.mExpertsScore = 11 - mGameState.mViewersScore;
+            mExpertsScoreView.setCurrentItem(11 - mGameState.mExpertsScore, true);
+        }
     }
 
     @Override
@@ -352,16 +542,9 @@ public class MainFragment extends Fragment implements OnClickListener {
                 ADD_MINUTES_WHEEL_ITEMS.length - 1 - mGameState.mAdditionalMinutes);
         if (sTime == mInitTime) {
             mStartButton.setText(R.string.start);
-            mExpertsScoreView.setEnabled(false);
-            mViewersScoreView.setEnabled(false);
-            mAdditionalMinutesView.setEnabled(true);
-            mTimerView.setEnabled(true);
-            mStartButton.setEnabled(true);
+            activateTimerAndMinutes();
         } else {
-            mExpertsScoreView.setEnabled(false);
-            mViewersScoreView.setEnabled(false);
-            mAdditionalMinutesView.setEnabled(false);
-            mTimerView.setEnabled(false);
+            activateStartButton();
             if (sPlayer != null) {
                 mStartButton.setText(R.string.stop);
             } else {
@@ -382,10 +565,7 @@ public class MainFragment extends Fragment implements OnClickListener {
                     mStartButton.setText(R.string.reset);
                     ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
                     tone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-                    mExpertsScoreView.setEnabled(false);
-                    mViewersScoreView.setEnabled(false);
-                    mAdditionalMinutesView.setEnabled(false);
-                    mTimerView.setEnabled(false);
+                    activateStartButton();
                     sTimerHandler.postDelayed(sTimerRunnable, 1000);
                     sColorHandler.postDelayed(sColorRunnable,
                             mGameState.isBlitz() ? 1000 / 13 : 3000 / 13);
@@ -395,35 +575,24 @@ public class MainFragment extends Fragment implements OnClickListener {
                     mStartButtonColor = INITIAL_START_BUTTON_COLOR;
                     mStartButton.setBackgroundColor(mStartButtonColor);
                     mStartButton.setText(R.string.start);
-                    mAdditionalMinutesView.setEnabled(true);
-                    mTimerView.setEnabled(true);
-                    mStartButton.setEnabled(true);
+                    activateTimerAndMinutes();
                     if (sPlayer != null) {
                         sPlayer.release();
                         sPlayer = null;
-                        if (!mGameState.isBlitz()) {
+                        if (!mGameState.isBlitz() || mGameState.mBlitzCounter == 3) {
                             ++mGameState.mMinutesCounter;
-                            mExpertsScoreView.setEnabled(true);
-                            mViewersScoreView.setEnabled(true);
-                            mAdditionalMinutesView.setEnabled(false);
-                            mTimerView.setEnabled(false);
-                            mStartButton.setEnabled(false);
+                            mGameState.mBlitzCounter = 0;
+                            if (!mGameState.isBlitz()) {
+                                mAdditionalMinutesDecreasable = true;
+                                setAdditionalMinutesItems();
+                                activateScoresAndAdditionalMinutes();
+                            } else {
+                                activateScores();
+                            }
                         } else {
                             ++mGameState.mBlitzCounter;
                             if (mGameState.mBlitzCounter < 3) {
-                                mExpertsScoreView.setEnabled(false);
-                                mViewersScoreView.setEnabled(true);
-                                mAdditionalMinutesView.setEnabled(false);
-                                mTimerView.setEnabled(true);
-                                mStartButton.setEnabled(true);
-                            } else if (mGameState.mBlitzCounter == 3) {
-                                ++mGameState.mMinutesCounter;
-                                mGameState.mBlitzCounter = 0;
-                                mExpertsScoreView.setEnabled(true);
-                                mViewersScoreView.setEnabled(true);
-                                mAdditionalMinutesView.setEnabled(false);
-                                mTimerView.setEnabled(false);
-                                mStartButton.setEnabled(false);
+                                activateViewersScore();
                             }
                         }
                     }
