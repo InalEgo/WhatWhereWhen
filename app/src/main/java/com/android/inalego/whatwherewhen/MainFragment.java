@@ -293,21 +293,21 @@ public class MainFragment extends Fragment implements OnClickListener {
         int pos;
         if (mAdditionalMinutesDecreasable) {
             if (mGameState.mAdditionalMinutes == 0) {
-                items = new String[]{"0"};
+                items = new String[]{"0'"};
             } else {
                 items = new String[]{
-                        String.valueOf(mGameState.mAdditionalMinutes),
-                        String.valueOf(mGameState.mAdditionalMinutes - 1)};
+                        mGameState.mAdditionalMinutes + "'",
+                        (mGameState.mAdditionalMinutes - 1) + "'"};
             }
             pos = 0;
         } else {
             if (mGameState.mAdditionalMinutes == ADD_MINUTES_WHEEL_ITEMS.length - 1) {
-                items = new String[]{String.valueOf(mGameState.mAdditionalMinutes)};
+                items = new String[]{mGameState.mAdditionalMinutes + "'"};
                 pos = 0;
             } else {
                 items = new String[]{
-                        String.valueOf(mGameState.mAdditionalMinutes + 1),
-                        String.valueOf(mGameState.mAdditionalMinutes)};
+                        (mGameState.mAdditionalMinutes + 1) + "'",
+                        mGameState.mAdditionalMinutes + "'"};
                 pos = 1;
             }
         }
@@ -607,9 +607,9 @@ public class MainFragment extends Fragment implements OnClickListener {
             mBlitz = blitz;
         }
 
-        public boolean isValid() {
-            return mMinutesCounter + mAdditionalMinutes == mExpertsScore + mViewersScore;
-        }
+//        public boolean isValid() {
+//            return mMinutesCounter + mAdditionalMinutes == mExpertsScore + mViewersScore;
+//        }
 
         public int describeContents() {
             return 0;
